@@ -1,3 +1,4 @@
+import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
@@ -6,7 +7,10 @@ import { SMS_PASSWORD, SMS_SENDER, SMS_USER } from 'src/common/constants';
 
 @Injectable()
 export class OtpService {
-  constructor(private config: ConfigService) {}
+  constructor(
+    private config: ConfigService,
+    private mailService: MailerService,
+  ) {}
   async generateOtp(): Promise<{
     otpExpiresAt: Date;
     otp: number;
@@ -25,10 +29,15 @@ export class OtpService {
   }
 
   async sendOtp(phone: string, otp: number) {
+    const message = `Here is your OTP ${otp}. Please don't share it with anyone. OTP is valid for only 5 min`;
+    this.sendSms(phone, message);
+  }
+
+  async sendSms(phone: string, message: string) {
     const payload = {
       recipients: phone,
       sender: this.config.get(SMS_SENDER),
-      message: `Here is your OTP ${otp}. Please don't share it with anyone. OTP is valid for only 5 min`,
+      message,
     };
 
     const formData = new URLSearchParams(payload);
@@ -44,5 +53,15 @@ export class OtpService {
         },
       },
     );
+  }
+
+  async sendEmail(email: string, subject: string, message: string) {
+    const response = await this.mailService.sendMail({
+      to: email,
+      from: 'clementmistico@gmail.com',
+      subject,
+      text: message,
+    });
+    return response;
   }
 }

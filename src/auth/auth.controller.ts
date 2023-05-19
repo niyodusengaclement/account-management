@@ -29,6 +29,18 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
+  @Post('signin/otp-verification')
+  signinOtpVerification(@Body() dto: OtpDto) {
+    return this.authService.loginOtpVerification(dto);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Get('magic-link/:email')
+  magicLink(@Param('email') email: string) {
+    return this.authService.magicLink(email);
+  }
+
+  @HttpCode(HttpStatus.OK)
   @Post('otp-verification')
   otpVerification(@Body() dto: OtpDto) {
     return this.authService.otpVerification(dto);

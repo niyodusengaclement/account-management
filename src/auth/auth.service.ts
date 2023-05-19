@@ -66,7 +66,7 @@ export class AuthService {
             id: true,
           },
         }),
-        // this.otpService.sendOtp(dto.phone, otp),
+        this.otpService.sendOtp(dto.phone, otp),
       ]);
       return {
         message: `We sent you an OTP on ${dto.phone}. OTP expires in 5 min`,
@@ -102,6 +102,48 @@ export class AuthService {
       throw new UnauthorizedException('Your phone is not verified');
     }
 
+    const { otpExpiresAt, otp, hashedOtp } =
+      await this.otpService.generateOtp();
+
+    await Promise.all([
+      this.otpService.sendOtp(dto.phone, otp),
+      this.prisma.user.update({
+        data: {
+          otpExpiresAt,
+          otp: hashedOtp,
+        },
+        where: { id: user.id },
+      }),
+    ]);
+
+    return {
+      message: 'We have sent you an OTP message',
+    };
+  }
+
+  async generateToken(payload: JwtPayload): Promise<string> {
+    return await this.jwt.signAsync(payload, {
+      expiresIn: '1d',
+      privateKey: this.config.get(JWT_SECRET),
+    });
+  }
+
+  async loginOtpVerification(dto: OtpDto) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        phone: dto.phone,
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const hashMatch = await bcrypt.compare(`${dto.otp}`, user.otp);
+    if (
+      (new Date() > user.otpExpiresAt || !hashMatch) &&
+      dto.otp !== 123456 // For testing purpose 123456 is always valid (to be removed in production mode)
+    ) {
+      throw new UnauthorizedException('Invalid OTP or OTP has expired');
+    }
     const { id, firstName, lastName, email, phone, role } = user || {};
 
     const token = await this.generateToken({
@@ -112,19 +154,13 @@ export class AuthService {
       phone,
       role,
     });
+
     return {
       message: 'You have logged in successfully',
       data: {
         token,
       },
     };
-  }
-
-  async generateToken(payload: JwtPayload): Promise<string> {
-    return await this.jwt.signAsync(payload, {
-      expiresIn: '1d',
-      privateKey: this.config.get(JWT_SECRET),
-    });
   }
 
   async otpVerification(dto: OtpDto) {
@@ -184,6 +220,40 @@ export class AuthService {
     ]);
     return {
       message: `We sent you an OTP on ${phone}. OTP expires in 5 min`,
+      data: {
+        id: user.id,
+      },
+    };
+  }
+
+  async magicLink(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} was not found`);
+    }
+    if (!user.isPhoneVerified) {
+      throw new BadRequestException('User account is not verified');
+    }
+    const { id, firstName, lastName, phone, role } = user || {};
+    const token = await this.generateToken({
+      id,
+      firstName,
+      lastName,
+      email,
+      phone,
+      role,
+    });
+
+    this.otpService.sendEmail(
+      email,
+      'Magic Login link',
+      `Click the following link to login https://localhost:3000/${token}`,
+    );
+
+    return {
+      message: `We sent you a magic link to your email address`,
       data: {
         id: user.id,
       },

@@ -10,6 +10,7 @@ import { LoggerInterceptor, ResponseInterceptor } from './common/interceptors';
 import { OtpModule } from './otp/otp.module';
 import { ProfileModule } from './profile/profile.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -25,6 +26,15 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     OtpModule,
     ProfileModule,
     CloudinaryModule,
+    MailerModule.forRoot({
+      transport: {
+        host: 'smtp.gmail.com',
+        auth: {
+          user: process.env.MAIL_USER,
+          pass: process.env.MAIL_PASSWORD,
+        },
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [

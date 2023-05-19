@@ -76,8 +76,8 @@ $ docker-compose up --build
 ```
 
 
-> If you need some env variables like SMS KEYS, NIDA API ... you can contact me clementmistico@gmail.com or +250780282575.
-> For testing purpose 123456 is always valid OTP (to be removed in production mode), on either phone verification or transaction confirmation.
+> If you need some env variables like SMS KEYS, ... you can contact me on email clementmistico@gmail.com or callme via phone at +250780282575.
+> For testing purpose 123456 is always valid OTP (to be removed in production mode).
 
 
 ### Test
@@ -96,3 +96,4 @@ $ yarn test:cov
 ## Author
 
 - [NIYODUSENGA Clement](https://github.com/niyodusengaclement)
+[![Gmail Badge](https://img.shields.io/badge/-Gmail-c14438?style=flat-square&logo=Gmail&logoColor=white&link=mailto:clementmistico@gmail.com)](mailto:clementmistico@gmail.com)
