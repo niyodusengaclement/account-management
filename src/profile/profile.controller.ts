@@ -18,6 +18,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { LoggedUser } from 'src/auth/decorator';
 import { JwtGuard } from 'src/auth/guard';
 import { JwtPayload } from 'src/common/interfaces';
+import { AccountStatus } from '@prisma/client';
 
 @ApiTags('Profile')
 @Controller('profile')
@@ -26,14 +27,28 @@ import { JwtPayload } from 'src/common/interfaces';
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
+  @HttpCode(HttpStatus.OK)
   @Get('/verification-requests')
   findPendingRequests(@LoggedUser() user: JwtPayload) {
     return this.profileService.findPendingRequests(user);
   }
 
+  @HttpCode(HttpStatus.OK)
   @Get('me')
   findOne(@LoggedUser('id') userId: string) {
     return this.profileService.findOne(userId);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Patch('/verification-requests/:id/approve')
+  approveRequest(@LoggedUser() user: JwtPayload, @Param('id') id: string) {
+    return this.profileService.updateRequest(user, id, AccountStatus.VERIFIED);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Patch('/verification-requests/:id/reject')
+  rejectRequest(@LoggedUser() user: JwtPayload, @Param('id') id: string) {
+    return this.profileService.updateRequest(user, id, AccountStatus.VERIFIED);
   }
 
   @HttpCode(HttpStatus.OK)
