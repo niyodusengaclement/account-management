@@ -1,0 +1,40 @@
+services:
+  api:
+    container_name: account-management-api
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: development
+    env_file:
+        - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+    volumes:
+      - .:/usr/src/app
+    command: yarn start:dev
+    ports:
+      - 9000:9000
+    depends_on:
+      - postgres
+    networks:
+      - account-management-network
+
+  postgres:
+    image: postgres:alpine
+    container_name: account-management-db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports: 
+      - '5431:5432'
+    volumes:
+      - account-management:/var/lib/postgresql/data
+    networks:
+      - account-management-network
+
+volumes:
+  account-management:
+networks:
+  account-management-network:
