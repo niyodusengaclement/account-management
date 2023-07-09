@@ -27,15 +27,31 @@ export class ProfileService {
     }
     const requests = await this.prisma.user.findMany({
       where: { accountStatus: AccountStatus.PENDING },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        country: true,
+        docType: true,
+        docNumber: true,
+        docPath: true,
+        phone: true,
+        gender: true,
+        maritalStatus: true,
+        dob: true,
+        isEmailVerified: false,
+        isPhoneVerified: false,
+        accountStatus: true,
+        profilePath: true,
+        password: false,
+        otp: false,
+        otpExpiresAt: false,
+      },
     });
     return {
       message: 'Pending requests has been retrieved successfully',
-      data: [
-        requests.map((request) => {
-          const { password, otp, ...rest } = request;
-          return rest;
-        }),
-      ],
+      data: requests,
     };
   }
 
