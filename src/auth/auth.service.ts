@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -11,12 +12,13 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { JWT_SECRET } from 'src/common/constants';
+import { FRONTEND_URL, JWT_SECRET } from 'src/common/constants';
 import { JwtPayload } from 'src/common/interfaces';
 import { OtpService } from 'src/otp/otp.service';
 import { existsSync, readFile } from 'fs';
 import { promisify } from 'util';
 import * as path from 'path';
+import tokenValidator from 'src/common/utils/token.util';
 
 @Injectable()
 export class AuthService {
@@ -121,10 +123,13 @@ export class AuthService {
     };
   }
 
-  async generateToken(payload: JwtPayload): Promise<string> {
+  async generateToken(
+    payload: JwtPayload,
+    secret: string = this.config.get(JWT_SECRET),
+  ): Promise<string> {
     return await this.jwt.signAsync(payload, {
       expiresIn: '1d',
-      privateKey: this.config.get(JWT_SECRET),
+      privateKey: secret,
     });
   }
 
@@ -249,7 +254,9 @@ export class AuthService {
     this.otpService.sendEmail(
       email,
       'Magic Login link',
-      `Click the following link to login https://localhost:3000/${token}`,
+      `Click the following link to login ${this.config.get(
+        FRONTEND_URL,
+      )}/${token}`,
     );
 
     return {
@@ -257,6 +264,75 @@ export class AuthService {
       data: {
         id: user.id,
       },
+    };
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        email,
+      },
+    });
+    if (!user) {
+      throw new BadRequestException('Provided email was not found');
+    }
+    const { id, role, password, firstName, lastName, phone } = user || {};
+
+    const token = await this.generateToken(
+      {
+        id,
+        firstName,
+        lastName,
+        email,
+        role,
+        phone,
+      },
+      password,
+    );
+
+    const message = `Click the button below to reset your password
+    ${this.config.get(FRONTEND_URL)}/reset-password?t=${token}`;
+
+    this.otpService.sendEmail(email, 'Reset Password', message);
+    return {
+      message: `Reset password link was sent to ${email}`,
+      data: {
+        id: user.id,
+      },
+    };
+  }
+
+  async resetPassword(email: string, token: string, newPassword: string) {
+    const userByEmail = await this.prisma.user.findFirst({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!userByEmail) {
+      throw new NotFoundException(`User with email: ${email} was not found`);
+    }
+    await tokenValidator(token, userByEmail.password);
+    const hashMatch = await bcrypt.compare(newPassword, userByEmail.password);
+    if (hashMatch) {
+      throw new ForbiddenException(
+        'New password should not be the same as the old password',
+      );
+    }
+
+    const salt = await bcrypt.genSalt();
+    const password = await bcrypt.hash(newPassword, salt);
+
+    await this.prisma.user.update({
+      data: {
+        password,
+      },
+      where: {
+        id: userByEmail.id,
+      },
+    });
+    return {
+      message: `Your password has been successfully updated`,
     };
   }
 

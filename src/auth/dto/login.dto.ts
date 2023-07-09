@@ -19,4 +19,5 @@ export class SigninDto {
     required: true,
   })
   password: string;
+  email: any;
 }
