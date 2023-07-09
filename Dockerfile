@@ -50,4 +50,4 @@ COPY --chown=node:node --from=build /usr/src/app/package*.json ./
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 COPY --chown=node:node --from=build /usr/src/app/prisma ./prisma
 
-CMD [  "npm", "run", "start:migrate:prod" ]
+CMD [  "npm", "run", "start:prod" ]

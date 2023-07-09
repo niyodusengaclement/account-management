@@ -3,7 +3,7 @@ import { DocType, Gender, MaritalStatus } from '@prisma/client';
 import {
   Allow,
   IsDateString,
-  IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -15,7 +15,7 @@ export class ProfileDto {
   @ApiProperty({
     type: 'string',
     default: 'Mistico',
-    required: true,
+    required: false,
   })
   firstName: string;
 
@@ -24,33 +24,23 @@ export class ProfileDto {
   @ApiProperty({
     type: 'string',
     default: 'Clement',
-    required: true,
-  })
-  lastName: string;
-
-  @IsEmail()
-  @IsOptional()
-  @ApiProperty({
-    type: 'string',
-    default: 'clementmistico@yopmail.com',
     required: false,
   })
-  email: string;
+  lastName: string;
 
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
     type: 'string',
     default: 'rwanda',
-    required: true,
+    required: false,
   })
   country: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsEnum([DocType.NID, DocType.PASSPORT])
   @ApiProperty({
-    type: 'string',
-    default: 'NID',
+    enum: [DocType.NID, DocType.PASSPORT],
+    default: DocType.NID,
     required: true,
   })
   docType: DocType;
@@ -60,7 +50,7 @@ export class ProfileDto {
   @ApiProperty({
     type: 'string',
     default: '120008117******',
-    required: true,
+    required: false,
   })
   docNumber: string;
 
@@ -71,12 +61,11 @@ export class ProfileDto {
   @Allow()
   docFile: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsEnum([Gender.MALE, Gender.FEMALE])
   @ApiProperty({
-    type: 'string',
-    default: 'MALE',
-    required: true,
+    enum: [Gender.MALE, Gender.FEMALE],
+    default: Gender.MALE,
+    required: false,
   })
   gender: Gender;
 
@@ -85,7 +74,7 @@ export class ProfileDto {
   @ApiProperty({
     type: 'string',
     default: 'SINGLE',
-    required: true,
+    required: false,
   })
   maritalStatus: MaritalStatus;
 
@@ -93,7 +82,7 @@ export class ProfileDto {
   @IsNotEmpty()
   @ApiProperty({
     type: 'string',
-    required: true,
+    required: false,
     default: new Date(),
   })
   dob: Date;

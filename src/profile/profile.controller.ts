@@ -10,6 +10,8 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ParseFilePipe,
+  FileTypeValidator,
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
@@ -58,7 +60,16 @@ export class ProfileController {
   update(
     @LoggedUser('id') userId: string,
     @Body() profile: ProfileDto,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({
+            fileType: 'pdf',
+          }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
   ) {
     return this.profileService.update(userId, profile, file);
   }
@@ -78,9 +89,18 @@ export class ProfileController {
     },
   })
   @UseInterceptors(FileInterceptor('profileImage'))
-  uploadPrroofileImage(
+  uploadProfileImage(
     @LoggedUser('id') userId: string,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({
+            fileType: 'image',
+          }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
   ) {
     return this.profileService.uploadProfileImage(userId, file);
   }
