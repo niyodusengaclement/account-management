@@ -50,7 +50,11 @@ export class ProfileController {
   @HttpCode(HttpStatus.OK)
   @Patch('/verification-requests/:id/reject')
   rejectRequest(@LoggedUser() user: JwtPayload, @Param('id') id: string) {
-    return this.profileService.updateRequest(user, id, AccountStatus.VERIFIED);
+    return this.profileService.updateRequest(
+      user,
+      id,
+      AccountStatus.UNVERIFIED,
+    );
   }
 
   @HttpCode(HttpStatus.OK)

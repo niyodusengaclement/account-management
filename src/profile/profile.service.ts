@@ -104,7 +104,7 @@ export class ProfileService {
       throw new NotFoundException();
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, otp, ...rest } = userById;
+    const { password, otpExpiresAt, otp, ...rest } = userById;
     return {
       message: 'Your profile information has been retrieved successfully',
       data: { ...rest },
